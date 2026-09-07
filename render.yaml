@@ -2,20 +2,13 @@ services:
   - type: web
     name: fusion-motors-demo
     runtime: node
+    plan: free
     buildCommand: npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: fusion-motors-demo-db
-          property: connectionString
       - key: ANALYTICS_ADMIN_KEY
         generateValue: true
       - key: IP_HASH_SALT
         generateValue: true
-
-databases:
-  - name: fusion-motors-demo-db
-    plan: free
