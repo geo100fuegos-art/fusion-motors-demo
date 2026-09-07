@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import BrandBar from '../components/BrandBar.jsx'
-import { trackEvent } from '../services/analytics.js'
+import { saveLocalLead, trackEvent } from '../services/analytics.js'
 
 export default function Lead() {
   const moto = JSON.parse(sessionStorage.getItem('selected_motorcycle') || '{}')
@@ -12,13 +12,17 @@ export default function Lead() {
   const submit = async (e) => {
     e.preventDefault(); if (!form.consent) return
     setSending(true)
+    const lead = { ...form, motorcycle: moto, answers }
     try {
-      const res = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, motorcycle: moto, answers }) })
+      const res = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(lead) })
       if (!res.ok) throw new Error('No se pudo guardar')
+    } catch {
+      saveLocalLead(lead)
+    } finally {
       trackEvent('submit_lead', { motorcycleId: moto.id, purchaseMode: form.purchaseMode })
       setSubmitted(true)
-    } catch { alert('No pudimos guardar el prospecto. Intentá de nuevo.') }
-    finally { setSending(false) }
+      setSending(false)
+    }
   }
 
   const whatsapp = () => {
