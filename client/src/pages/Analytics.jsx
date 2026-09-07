@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { getLocalAnalytics } from '../services/analytics.js'
+
+const staticDemo = window.location.hostname.endsWith('github.io')
 
 export default function Analytics() {
   const [key, setKey] = useState(localStorage.getItem('analytics_key') || '')
@@ -7,6 +10,7 @@ export default function Analytics() {
 
   const load = async () => {
     setError('')
+    if (staticDemo) { setData(getLocalAnalytics()); return }
     try {
       const res = await fetch('/api/analytics', { headers: { 'x-admin-key': key } })
       if (!res.ok) throw new Error('Acceso denegado o analytics no disponible')
@@ -14,11 +18,11 @@ export default function Analytics() {
     } catch (e) { setError(e.message) }
   }
 
-  useEffect(() => { if (key) load() }, [])
+  useEffect(() => { if (staticDemo || key) load() }, [])
 
   return (
     <main className="analytics-page">
-      <div className="analytics-head"><div><div className="kicker">NORYNET</div><h1>Demo Analytics</h1><p>Fusión Motors 503</p></div><div className="keybox"><input type="password" placeholder="Admin key" value={key} onChange={e=>setKey(e.target.value)}/><button onClick={load}>Ver métricas</button></div></div>
+      <div className="analytics-head"><div><div className="kicker">NORYNET</div><h1>Demo Analytics</h1><p>Fusión Motors 503{staticDemo ? ' · datos de este navegador' : ''}</p></div><div className="keybox">{staticDemo ? <button onClick={load}>Actualizar métricas</button> : <><input type="password" placeholder="Admin key" value={key} onChange={e=>setKey(e.target.value)}/><button onClick={load}>Ver métricas</button></>}</div></div>
       {error && <div className="error-box">{error}</div>}
       {data && <>
         <section className="metric-grid"><div><span>🔁</span><strong>{data.summary.visits}</strong><small>Visitas / sesiones</small></div><div><span>👁</span><strong>{data.summary.pageViews}</strong><small>Páginas vistas</small></div><div><span>👤</span><strong>{data.summary.visitors}</strong><small>Visitantes aprox.</small></div><div><span>🏍️</span><strong>{data.summary.quizStarts}</strong><small>Iniciaron búsqueda</small></div><div><span>✅</span><strong>{data.summary.resultsViews}</strong><small>Vieron resultados</small></div><div><span>📲</span><strong>{data.summary.whatsappClicks}</strong><small>Clics WhatsApp</small></div><div><span>🔥</span><strong>{data.summary.leads}</strong><small>Leads enviados</small></div></section><section className="analytics-table"><h2>Visitas por fuente</h2><div className="source-list">{data.sources.map(s=><div key={s.source}><strong>{s.source}</strong><span>{s.visits} visita{s.visits===1?'':'s'}</span></div>)}</div></section>
